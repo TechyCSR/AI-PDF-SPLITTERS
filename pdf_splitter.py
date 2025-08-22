@@ -196,6 +196,28 @@ class PDFSplitter:
             print(f"❌ Error during PDF splitting: {e}")
             return False
     
+    def split_pdf(self, output_dir: str, verbose: bool = False) -> Tuple[bool, str]:
+        """Main method to split PDF - returns (success, summary) tuple"""
+        try:
+            # Set verbose mode if requested
+            if verbose:
+                print("🔍 Verbose mode enabled - showing detailed progress")
+            
+            # Perform the splitting
+            success = self.split_pdf_by_sections(output_dir)
+            
+            if success:
+                # Create summary report
+                summary = self.create_summary_report(output_dir)
+                return True, summary
+            else:
+                return False, "PDF splitting failed"
+                
+        except Exception as e:
+            error_msg = f"Unexpected error during PDF splitting: {e}"
+            print(f"❌ {error_msg}")
+            return False, error_msg
+    
     def _extract_section_pages(self, section_folder: Path, section_title: str, 
                               start_page: int, end_page: int, section_type: str) -> int:
         """Extract individual pages for a specific section"""
