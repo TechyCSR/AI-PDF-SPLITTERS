@@ -579,8 +579,7 @@ class UltraModernAIApp:
             self.terminal_print("🔄 Ready to try again or select new file!")
             self.terminal_print("=" * 40)
         
-        # Always re-enable browse button
-        self.browse_btn.config(state=tk.NORMAL)
+        # Browse button stays enabled (it was never disabled)
         
         # Reset process button text and enable only if file is selected
         self.process_btn.config(text="⚡ PROCESS")
@@ -601,8 +600,25 @@ class UltraModernAIApp:
     def clear_all(self):
         """Clear all data and reset interface"""
         if hasattr(self, 'processing') and self.processing:
-            self.terminal_print("⚠️ Cannot clear while processing!")
-            return
+            # Show alert dialog and ask if user wants to abort current processing
+            result = messagebox.askyesno(
+                "Processing in Progress",
+                "🔄 A file is currently being processed.\n\n"
+                "Do you want to abort the current processing and clear all data?\n\n"
+                "⚠️ Warning: This will stop the current operation and you'll lose progress.",
+                icon='warning'
+            )
+            if result:
+                # User chose to abort current processing
+                self.terminal_print("🛑 User requested to abort current processing")
+                self.terminal_print("⚠️ Aborting current operation...")
+                self.processing = False
+                self.processing_complete(success=False)
+                self.terminal_print("✅ Ready for clearing data")
+            else:
+                # User chose to keep current processing
+                self.terminal_print("📝 User chose to continue current processing")
+                return
             
         self.selected_file.set("")
         self.file_path_var.set("No file selected")
@@ -1063,8 +1079,25 @@ class UltraModernAIApp:
     def browse_file(self):
         """Browse and select PDF file with cyber interface"""
         if self.processing:
-            self.terminal_print("⚠️ Cannot select file while processing!")
-            return
+            # Show alert dialog and ask if user wants to abort current processing
+            result = messagebox.askyesno(
+                "Processing in Progress",
+                "🔄 A file is currently being processed.\n\n"
+                "Do you want to abort the current processing and select a new file?\n\n"
+                "⚠️ Warning: This will stop the current operation and you'll lose progress.",
+                icon='warning'
+            )
+            if result:
+                # User chose to abort current processing
+                self.terminal_print("🛑 User requested to abort current processing")
+                self.terminal_print("⚠️ Aborting current operation...")
+                self.processing = False
+                self.processing_complete(success=False)
+                self.terminal_print("✅ Ready for new file selection")
+            else:
+                # User chose to keep current processing
+                self.terminal_print("📝 User chose to continue current processing")
+                return
             
         file_path = filedialog.askopenfilename(
             title="Select PDF File - AI PDF Splitter Pro",
@@ -1119,10 +1152,10 @@ class UltraModernAIApp:
             self.terminal_print("⚠️ Processing already in progress!")
             return
         
-        # Disable controls during processing
+        # Disable process button during processing (keep browse button enabled)
         self.processing = True
         self.process_btn.config(state=tk.DISABLED, text="🔄 PROCESSING...")
-        self.browse_btn.config(state=tk.DISABLED)
+        # Note: browse_btn stays enabled but will show alert if clicked during processing
         
         # Reset progress
         self.progress_var.set(0)

@@ -8,6 +8,9 @@ import os
 import json
 import argparse
 import sys
+import time
+import socket
+import requests
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 import google.generativeai as genai
@@ -32,6 +35,11 @@ class GeminiPDFProcessor:
         
         # System prompts for training the AI
         self.system_prompts = self._get_system_prompts()
+        
+        # Configuration for timeouts and retries
+        self.api_timeout = 300  # 5 minutes timeout for API calls
+        self.connection_timeout = 10  # 10 seconds for connection test
+        self.max_retries = 3
         
     def _get_system_prompts(self) -> str:
         """Get comprehensive system prompts for training the AI"""
@@ -139,6 +147,45 @@ CRITICAL RULES:
 - **Example: "Chapter 1: The Beginning" or "Chapter 1 - Introduction"**
 """
 
+    def check_internet_connection(self) -> bool:
+        """Check if internet connection is available"""
+        try:
+            print("🌐 Checking internet connection...")
+            
+            # Try to connect to Google's DNS server
+            socket.create_connection(("8.8.8.8", 53), timeout=self.connection_timeout)
+            print("✅ Internet connection verified")
+            return True
+            
+        except (socket.timeout, socket.error, OSError):
+            print("❌ No internet connection detected")
+            return False
+    
+    def check_gemini_api_accessibility(self) -> bool:
+        """Check if Gemini API is accessible"""
+        try:
+            print("🔗 Checking Gemini API accessibility...")
+            
+            # Try to access Google AI API endpoint
+            response = requests.head(
+                "https://generativelanguage.googleapis.com",
+                timeout=self.connection_timeout
+            )
+            
+            if response.status_code in [200, 404, 403]:  # Any response means API is reachable
+                print("✅ Gemini API is accessible")
+                return True
+            else:
+                print(f"⚠️ Gemini API returned status code: {response.status_code}")
+                return False
+                
+        except (requests.exceptions.RequestException, requests.exceptions.Timeout):
+            print("❌ Cannot reach Gemini API servers")
+            return False
+        except Exception as e:
+            print(f"❌ Error checking Gemini API: {e}")
+            return False
+
     def check_file_size(self, pdf_path: str) -> bool:
         """Check if PDF file is within Gemini's 50MB limit"""
         try:
@@ -159,7 +206,7 @@ CRITICAL RULES:
             return False
 
     def analyze_pdf_with_gemini(self, pdf_path: str) -> Dict:
-        """Analyze PDF directly using Gemini's media input capabilities"""
+        """Analyze PDF directly using Gemini's media input capabilities with robust error handling"""
         try:
             print(f"🔍 Analyzing PDF: {Path(pdf_path).name}")
             
@@ -167,7 +214,20 @@ CRITICAL RULES:
             if not self.check_file_size(pdf_path):
                 raise Exception("PDF file exceeds Gemini's 50 MB limit")
             
+            # Check internet connectivity
+            if not self.check_internet_connection():
+                raise Exception(
+                    "No internet connection detected. Please check your network connection and try again."
+                )
+            
+            # Check Gemini API accessibility
+            if not self.check_gemini_api_accessibility():
+                raise Exception(
+                    "Cannot reach Gemini API servers. Please check your internet connection or try again later."
+                )
+            
             print(f"🤖 Sending PDF directly to Gemini AI for analysis...")
+            print(f"⏱️ This may take up to {self.api_timeout//60} minutes depending on PDF size...")
             
             # Prepare prompt for Gemini
             prompt = f"""
@@ -204,31 +264,108 @@ Return the result in the exact JSON format specified above.
                 }
             ]
             
-            # Generate response from Gemini with PDF input
-            response = self.model.generate_content(content_parts)
+            # Generate response from Gemini with PDF input and timeout handling
+            start_time = time.time()
             
-            if not response.text:
-                raise Exception("No response received from Gemini API")
-            
-            print(f"✅ Received response from Gemini AI")
-            
-            # Parse JSON response
-            try:
-                result = json.loads(response.text)
-                print(f"✅ Successfully parsed JSON response")
-                return result
-                
-            except json.JSONDecodeError as e:
-                print(f"⚠️  JSON parsing failed, attempting to fix...")
-                # Try to extract JSON from response
-                cleaned_response = self._extract_json_from_response(response.text)
-                if cleaned_response:
-                    return cleaned_response
-                else:
-                    raise Exception(f"Failed to parse JSON response: {e}")
+            # Attempt API call with retries
+            last_exception = None
+            for attempt in range(self.max_retries):
+                try:
+                    if attempt > 0:
+                        print(f"🔄 Retrying API call (attempt {attempt + 1}/{self.max_retries})...")
+                        time.sleep(5)  # Wait 5 seconds between retries
+                    
+                    # Generate response with timeout monitoring
+                    response = self.model.generate_content(content_parts)
+                    
+                    # Check if we got a response
+                    if not response.text:
+                        raise Exception("No response received from Gemini API")
+                    
+                    elapsed_time = time.time() - start_time
+                    print(f"✅ Received response from Gemini AI (took {elapsed_time:.1f}s)")
+                    
+                    # Parse JSON response
+                    try:
+                        result = json.loads(response.text)
+                        print(f"✅ Successfully parsed JSON response")
+                        return result
+                        
+                    except json.JSONDecodeError as e:
+                        print(f"⚠️  JSON parsing failed, attempting to fix...")
+                        # Try to extract JSON from response
+                        cleaned_response = self._extract_json_from_response(response.text)
+                        if cleaned_response:
+                            return cleaned_response
+                        else:
+                            raise Exception(f"Failed to parse JSON response: {e}")
+                    
+                    break  # Success, exit retry loop
+                    
+                except Exception as e:
+                    last_exception = e
+                    elapsed_time = time.time() - start_time
+                    
+                    # Check for timeout
+                    if elapsed_time > self.api_timeout:
+                        raise Exception(
+                            f"API call timed out after {self.api_timeout//60} minutes. "
+                            f"This usually indicates a network connectivity issue. "
+                            f"Please check your internet connection and try again."
+                        )
+                    
+                    # Check for network-related errors
+                    error_str = str(e).lower()
+                    if any(keyword in error_str for keyword in ['network', 'connection', 'timeout', 'unreachable']):
+                        if attempt == self.max_retries - 1:  # Last attempt
+                            raise Exception(
+                                f"Network error: {e}. Please check your internet connection and try again."
+                            )
+                        else:
+                            print(f"⚠️ Network error on attempt {attempt + 1}: {e}")
+                            continue
+                    
+                    # For other errors, fail immediately
+                    if attempt == self.max_retries - 1:
+                        raise e
+                        
+            # If we get here, all retries failed
+            if last_exception:
+                raise last_exception
                     
         except Exception as e:
-            raise Exception(f"Error in Gemini analysis: {e}")
+            error_msg = str(e)
+            
+            # Provide user-friendly error messages
+            if "internet" in error_msg.lower() or "network" in error_msg.lower():
+                raise Exception(
+                    f"🌐 Network Error: {e}\n\n"
+                    f"💡 Solutions:\n"
+                    f"   • Check your internet connection\n"
+                    f"   • Ensure you're not behind a restrictive firewall\n"
+                    f"   • Try again in a few minutes\n"
+                    f"   • Contact your network administrator if the problem persists"
+                )
+            elif "timeout" in error_msg.lower():
+                raise Exception(
+                    f"⏱️ Timeout Error: {e}\n\n"
+                    f"💡 Solutions:\n"
+                    f"   • Check your internet connection speed\n"
+                    f"   • Try with a smaller PDF file\n"
+                    f"   • Retry the operation\n"
+                    f"   • Consider splitting large PDFs into smaller files"
+                )
+            elif "api" in error_msg.lower() and "key" in error_msg.lower():
+                raise Exception(
+                    f"🔑 API Key Error: {e}\n\n"
+                    f"💡 Solutions:\n"
+                    f"   • Check your GEMINI_API_KEY in the .env file\n"
+                    f"   • Ensure the API key is valid and active\n"
+                    f"   • Verify you have sufficient API quota\n"
+                    f"   • Visit https://makersuite.google.com/app/apikey to manage your API key"
+                )
+            else:
+                raise Exception(f"Error in Gemini analysis: {e}")
     
     def _extract_json_from_response(self, response_text: str) -> Optional[Dict]:
         """Extract JSON from Gemini response text"""
