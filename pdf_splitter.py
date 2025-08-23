@@ -21,6 +21,7 @@ class PDFSplitter:
         self.sections_data = None
         self.pdf_document = None
         self.base_folder_name = None
+        self.pdf_path = None
         
     def load_ai_analysis(self, json_path: str) -> bool:
         """Load the AI analysis JSON file"""
@@ -76,6 +77,8 @@ class PDFSplitter:
             if not Path(pdf_path).exists():
                 raise Exception(f"PDF file not found: {pdf_path}")
             
+            # Store the actual PDF path for filename extraction
+            self.pdf_path = pdf_path
             self.pdf_document = fitz.open(pdf_path)
             
             # Validate page count
@@ -98,11 +101,11 @@ class PDFSplitter:
     def create_folder_structure(self, output_dir: str) -> str:
         """Create the folder structure for organizing PDF pages"""
         try:
-            # Get base folder name from PDF filename
-            pdf_filename = self.sections_data['metadata']['file_name']
-            self.base_folder_name = Path(pdf_filename).stem
+            # Get base folder name from actual PDF filename (without extension)
+            pdf_filename = Path(self.pdf_path).name  # Get actual filename from stored path
+            self.base_folder_name = pdf_filename.replace('.pdf', '').replace('_compressed', '')
             
-            # Create main output directory
+            # Create main output directory using the full book name as prefix
             main_folder = Path(output_dir) / self.base_folder_name
             main_folder.mkdir(parents=True, exist_ok=True)
             
@@ -136,9 +139,16 @@ class PDFSplitter:
             return ""
     
     def _create_safe_folder_name(self, title: str) -> str:
-        """Create a safe folder name from section title"""
+        """Create a safe folder name with book prefix and section title"""
+        # Get the book prefix from actual PDF filename
+        pdf_filename = Path(self.pdf_path).name
+        book_prefix = pdf_filename.replace('.pdf', '').replace('_compressed', '')
+        
+        # Create full folder name with prefix
+        full_name = f"{book_prefix}_{title}"
+        
         # Remove or replace invalid characters
-        safe_name = title.replace('/', '_').replace('\\', '_').replace(':', '_')
+        safe_name = full_name.replace('/', '_').replace('\\', '_').replace(':', '_')
         safe_name = safe_name.replace('*', '_').replace('?', '_').replace('"', '_')
         safe_name = safe_name.replace('<', '_').replace('>', '_').replace('|', '_')
         safe_name = safe_name.replace('\n', ' ').replace('\r', ' ')
@@ -275,16 +285,30 @@ class PDFSplitter:
     
     def _create_page_filename(self, section_title: str, section_page_num: int, section_type: str) -> str:
         """Create filename for individual page with full book title format"""
-        # Get the base book name from metadata
-        book_name = self.sections_data['metadata']['file_name'].replace('.pdf', '')
+        # Get the base book name from actual PDF filename
+        pdf_filename = Path(self.pdf_path).name
+        book_name = pdf_filename.replace('.pdf', '').replace('_compressed', '')
         
-        # Create safe section name
-        safe_section_name = self._create_safe_folder_name(section_title)
+        # Create safe section name (without book prefix for filename)
+        safe_section_name = self._create_safe_section_name(section_title)
         
         # Create filename with full book title format and section-relative page number
         filename = f"{book_name}_{safe_section_name}_Page_{section_page_num}.pdf"
         
         return filename
+    
+    def _create_safe_section_name(self, title: str) -> str:
+        """Create a safe section name without book prefix (for use in filenames)"""
+        # Remove or replace invalid characters
+        safe_name = title.replace('/', '_').replace('\\', '_').replace(':', '_')
+        safe_name = safe_name.replace('*', '_').replace('?', '_').replace('"', '_')
+        safe_name = safe_name.replace('<', '_').replace('>', '_').replace('|', '_')
+        safe_name = safe_name.replace('\n', ' ').replace('\r', ' ')
+        
+        # Remove extra spaces and trim
+        safe_name = ' '.join(safe_name.split())
+        
+        return safe_name
     
     def create_summary_report(self, output_dir: str) -> str:
         """Create a summary report of the splitting process"""
