@@ -1176,13 +1176,13 @@ class UltraModernAIApp:
     def process_pdf_workflow(self):
         """Main PDF processing workflow"""
         try:
-            pdf_path = self.selected_file.get()
+            original_pdf_path = self.selected_file.get()
             
             # Step 1: File validation and compression
             self.update_progress_status(10, "Validating file...")
             self.terminal_print("🔍 Checking file size and validity...")
             
-            is_valid, file_size, error = check_file_size(pdf_path)
+            is_valid, file_size, error = check_file_size(original_pdf_path)
             if not is_valid:
                 self.terminal_print(f"❌ File validation failed: {error}")
                 self.processing_complete(False)
@@ -1191,20 +1191,24 @@ class UltraModernAIApp:
             self.terminal_print(f"✅ File validated: {file_size:.1f} MB")
             self.update_progress_status(20, "File validated")
             
-            # Check if compression is needed
+            # Determine which file to use for AI analysis
+            ai_analysis_path = original_pdf_path
+            
+            # Check if compression is needed for AI analysis (50MB limit)
             if file_size > 50:
-                self.terminal_print("📦 File size > 50 MB, compressing...")
-                self.update_progress_status(30, "Compressing...")
-                compressed_path = pdf_path.replace('.pdf', '_compressed.pdf')
+                self.terminal_print("📦 File size > 50 MB, compressing for AI analysis...")
+                self.update_progress_status(30, "Compressing for AI...")
+                compressed_path = original_pdf_path.replace('.pdf', '_compressed.pdf')
                 
-                success, final_size, error = compress_pdf(pdf_path, compressed_path, 50)
+                success, final_size, error = compress_pdf(original_pdf_path, compressed_path, 50)
                 if not success:
                     self.terminal_print(f"❌ Compression failed: {error}")
                     self.processing_complete(False)
                     return
                 
                 self.terminal_print(f"✅ Compression successful: {final_size:.1f} MB")
-                pdf_path = compressed_path
+                self.terminal_print("📝 Note: Using compressed version for AI analysis only")
+                ai_analysis_path = compressed_path
             else:
                 self.terminal_print("✅ File size ≤ 50 MB, no compression needed")
             
@@ -1217,16 +1221,17 @@ class UltraModernAIApp:
             processor = GeminiPDFProcessor()
             self.terminal_print("🔍 Analyzing PDF content with AI...")
             
-            analysis_result = processor.analyze_pdf_with_gemini(pdf_path)
+            analysis_result = processor.analyze_pdf_with_gemini(ai_analysis_path)
             if not analysis_result:
-                self.add_message("❌ AI analysis failed")
+                self.terminal_print("❌ AI analysis failed")
+                self.processing_complete(False)
                 return
             
-            self.add_message(f"✅ AI analysis complete: {len(analysis_result.get('sections', []))} sections found")
-            self.update_progress(70)
+            self.terminal_print(f"✅ AI analysis complete: {len(analysis_result.get('sections', []))} sections found")
+            self.update_progress_status(70, "AI analysis complete")
             
-            # Save analysis result
-            analysis_file = pdf_path.replace('.pdf', '_analysis.json')
+            # Save analysis result (based on original filename)
+            analysis_file = original_pdf_path.replace('.pdf', '_analysis.json')
             with open(analysis_file, 'w') as f:
                 json.dump(analysis_result, f, indent=2)
             
@@ -1243,9 +1248,10 @@ class UltraModernAIApp:
                 self.add_message("❌ Failed to load AI analysis")
                 return
             
-            # Open PDF
-            if not splitter.open_pdf(pdf_path):
-                self.add_message("❌ Failed to open PDF")
+            # Open original PDF for splitting (high quality)
+            self.add_message(f"📄 Using original high-quality file: {os.path.basename(original_pdf_path)}")
+            if not splitter.open_pdf(original_pdf_path):
+                self.add_message("❌ Failed to open original PDF")
                 return
             
             output_dir = f"./output_{int(time.time())}"
@@ -1257,6 +1263,14 @@ class UltraModernAIApp:
             
             self.add_message("✅ PDF splitting complete!")
             self.update_progress(100)
+            
+            # Cleanup: Remove compressed file if it was created
+            if ai_analysis_path != original_pdf_path and os.path.exists(ai_analysis_path):
+                try:
+                    os.remove(ai_analysis_path)
+                    self.add_message(f"🗑️ Cleaned up temporary compressed file")
+                except Exception as e:
+                    self.add_message(f"⚠️ Could not remove compressed file: {e}")
             
             # Final success
             self.update_status("✅ Processing Complete!", 100)
