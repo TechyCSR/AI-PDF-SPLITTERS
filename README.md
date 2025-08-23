@@ -1,141 +1,252 @@
-# AI PDF Splitter - Step 1: File Handling & Compression
+# 🚀 AI PDF Splitter Pro
 
-This is the first step of a full-proof automated system in Python with AI to process PDF documents. This step handles file input validation, size checking, and compression.
+**Intelligent Document Processing & Analysis Suite**
 
-## Features
+A powerful, AI-driven PDF processing tool that automatically analyzes PDFs using Google Gemini AI and splits them into organized sections with a modern, professional GUI interface.
 
-- **File Size Validation**: Accepts PDF files up to 400 MB
-- **Smart Compression**: Compresses PDFs to ~50 MB while maintaining text readability
-- **CLI Interface**: Easy-to-use command-line tool
-- **Lossless Text**: Preserves text quality during compression
-- **Flexible Output**: Customizable output paths and target sizes
+## ✨ Features
 
-## Installation
+### 🎯 Core Functionality
+- **📁 Smart File Handling**: Accepts PDFs up to 400MB with automatic compression
+- **🤖 AI-Powered Analysis**: Uses Google Gemini AI to intelligently identify document sections
+- **✂️ Automated Splitting**: Organizes pages into structured folders with consistent naming
+- **📊 Live Progress Tracking**: Real-time processing updates with percentage display
+- **💻 Terminal Interface**: Live processing output with timestamps
 
-1. **Clone the repository**:
-   ```bash
-   git clone <repository-url>
-   cd AI-PDF-SPLITTERS
-   ```
+### 🎨 Modern GUI Interface
+- **🖥️ Fixed Medium Window**: 900x700 non-resizable professional layout
+- **🔄 Split Layout**: File selector at top, terminal + results at bottom
+- **🎭 Cyber Tech Theme**: Dark theme with cyan/green accents
+- **📱 Responsive Design**: Clean, organized interface with modern styling
+- **🔒 Smart Controls**: Automatic button state management during processing
 
-2. **Install dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
+### 📂 Intelligent Organization
+- **📁 Master Folders**: Uses full PDF name as prefix (e.g., "WF_4262_The Paris Library")
+- **📂 Sub Folders**: Organized by sections with consistent naming
+- **📄 Individual Files**: Section-relative page numbering with full prefix
+- **🏷️ Safe Naming**: Automatic sanitization of invalid characters
 
-## Usage
+## 🔧 System Requirements
 
-### Basic Usage
+### Prerequisites
+- **Python 3.8+** (3.12 recommended)
+- **Operating System**: Windows 10+ or Linux (Ubuntu 20.04+)
+- **Memory**: 4GB RAM minimum, 8GB recommended
+- **Storage**: 2GB free space for processing large files
+- **Internet**: Required for Google Gemini AI API access
+
+### Dependencies
+- `PyMuPDF (fitz)` - PDF manipulation and compression
+- `google-generativeai` - Google Gemini AI integration
+- `python-dotenv` - Environment variable management
+- `Pillow (PIL)` - Image processing for PDF compression
+- `tkinter` - GUI framework (usually included with Python)
+
+## 🚀 Quick Start
+
+### 1. Download & Setup
+```bash
+# Clone or download the project
+git clone <repository-url>
+cd AI-PDF-SPLITTERS
+
+# Run the automatic setup script
+./launch.sh          # Linux/macOS
+launch.bat           # Windows
+```
+
+### 2. API Configuration
+The launch script will automatically:
+- Create a Python virtual environment
+- Install all required dependencies
+- Generate a `.env` configuration file
+- Prompt you to add your Google Gemini API key
+
+### 3. Get Google Gemini API Key
+1. Visit [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Sign in with your Google account
+3. Click "Create API Key"
+4. Copy the generated key
+5. Paste it into the `.env` file when prompted
+
+### 4. Launch Application
+After setup, simply run:
+```bash
+./launch.sh          # Linux/macOS
+launch.bat           # Windows
+```
+
+## 📋 Usage Guide
+
+### Step 1: Select PDF File
+1. Click **"📁 BROWSE"** to select your PDF file
+2. Files up to 400MB are supported
+3. File information will display automatically
+
+### Step 2: Process Document
+1. Click **"⚡ PROCESS"** to begin analysis
+2. Watch live progress in the terminal panel
+3. Processing includes:
+   - File validation and compression (if needed)
+   - AI analysis with Google Gemini
+   - Intelligent section identification
+   - Automated page splitting
+
+### Step 3: Access Results
+1. View detailed results in the terminal
+2. Click **"📂 OPEN OUTPUT"** to access organized files
+3. Use **"🗑️ CLEAR"** to reset for new processing
+
+## 📁 Output Structure
+
+### Example for: `WF_4262_The Paris Library.pdf`
+
+```
+📁 WF_4262_The Paris Library/
+├── 📂 WF_4262_The Paris Library_Front Cover/
+│   └── 📄 WF_4262_The Paris Library_Front Cover_Page_1.pdf
+├── 📂 WF_4262_The Paris Library_Chapter 1_Odile/
+│   ├── 📄 WF_4262_The Paris Library_Chapter 1_Odile_Page_1.pdf
+│   ├── 📄 WF_4262_The Paris Library_Chapter 1_Odile_Page_2.pdf
+│   └── 📄 WF_4262_The Paris Library_Chapter 1_Odile_Page_3.pdf
+├── 📂 WF_4262_The Paris Library_Chapter 2_Lily/
+│   ├── 📄 WF_4262_The Paris Library_Chapter 2_Lily_Page_1.pdf
+│   └── 📄 WF_4262_The Paris Library_Chapter 2_Lily_Page_2.pdf
+└── 📋 splitting_summary.txt
+```
+
+## ⚙️ Configuration
+
+### Environment Variables (.env)
+```env
+# Google Gemini AI Configuration
+GEMINI_API_KEY=your_api_key_here
+GEMINI_TEMPERATURE=0.1
+GEMINI_MAX_TOKENS=8192
+```
+
+### Processing Settings
+- **Maximum File Size**: 400MB input limit
+- **Compression Target**: ~50MB for AI analysis
+- **AI Model**: Google Gemini Pro
+- **Output Format**: Individual PDF pages
+- **Naming Convention**: Consistent prefix-based system
+
+## 🛠️ Advanced Usage
+
+### Manual Installation
+If you prefer manual setup:
 
 ```bash
+# Create virtual environment
+python3 -m venv venv
+
+# Activate environment
+source venv/bin/activate  # Linux/macOS
+venv\Scripts\activate     # Windows
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Create .env file
+cp .env.example .env
+# Edit .env with your API key
+
+# Launch GUI
+python ai_pdf_splitter_gui.py
+```
+
+### Command Line Interface
+Each component can be used independently:
+
+```bash
+# Step 1: Compress PDF
 python pdf_compressor.py input.pdf
+
+# Step 2: AI Analysis
+python ai_processor.py input_compressed.pdf
+
+# Step 3: Split PDF
+python pdf_splitter.py input.pdf analysis.json output_directory
 ```
 
-### Advanced Options
+## 🐛 Troubleshooting
 
+### Common Issues
+
+**1. "ModuleNotFoundError" during startup**
 ```bash
-# Specify output file
-python pdf_compressor.py input.pdf --output compressed.pdf
+# Ensure virtual environment is activated
+source venv/bin/activate  # Linux/macOS
+venv\Scripts\activate     # Windows
 
-# Set custom target size (in MB)
-python pdf_compressor.py input.pdf --target-size 40
-
-# Enable verbose output
-python pdf_compressor.py input.pdf --verbose
-
-# Combine options
-python pdf_compressor.py input.pdf --output small.pdf --target-size 30 --verbose
+# Reinstall dependencies
+pip install -r requirements.txt
 ```
 
-### Command Line Arguments
-
-- `input_file`: Path to the input PDF file (required)
-- `-o, --output`: Output file path (default: `input_compressed.pdf`)
-- `-t, --target-size`: Target file size in MB (default: 50)
-- `-v, --verbose`: Enable verbose output
-- `-h, --help`: Show help message
-
-## Examples
-
-### Example 1: Basic Compression
+**2. "API key not found" error**
 ```bash
-python pdf_compressor.py document.pdf
-```
-Output:
-```
-Step 1: Checking file size...
-✅ File size check passed: 150.25 MB
-📦 Compressing file from 150.25 MB to target 50 MB...
-✅ Compression completed successfully!
-📊 Original size: 150.25 MB
-📊 Compressed size: 48.75 MB
-📊 Compression ratio: 67.6%
-📁 Compressed file saved to: document_compressed.pdf
+# Check .env file exists and contains valid key
+cat .env  # Linux/macOS
+type .env # Windows
+
+# Verify API key format (should start with 'AI')
 ```
 
-### Example 2: File Already Small Enough
+**3. "File too large" error**
+- Maximum input size is 400MB
+- For larger files, use external PDF compression first
+- Consider splitting large documents manually
+
+**4. GUI doesn't start**
 ```bash
-python pdf_compressor.py small_document.pdf
-```
-Output:
-```
-Step 1: Checking file size...
-✅ File size check passed: 25.50 MB
-📄 File is already within target size (25.50 MB ≤ 50 MB)
-📋 Copying file to: small_document_compressed.pdf
-✅ File copied successfully
-```
+# Check Python version (3.8+ required)
+python --version
 
-### Example 3: File Too Large
-```bash
-python pdf_compressor.py large_document.pdf
-```
-Output:
-```
-Step 1: Checking file size...
-❌ File size check failed: File size (450.75 MB) exceeds maximum allowed size (400 MB)
+# Verify tkinter installation
+python -c "import tkinter"
+
+# Try launching manually
+python ai_pdf_splitter_gui.py
 ```
 
-## How It Works
+### Performance Tips
+- **Large Files**: Files over 100MB may take longer to process
+- **Internet Speed**: AI analysis requires stable internet connection
+- **Memory Usage**: Close other applications for large file processing
+- **Storage Space**: Ensure 2x file size available for temporary files
 
-1. **File Validation**: Checks if the input file exists and is a PDF
-2. **Size Check**: Validates file size against the 400 MB limit
-3. **Compression Decision**: 
-   - If file ≤ 50 MB: Copies file without compression
-   - If file > 50 MB: Applies compression to reach target size
-4. **Compression Process**: Uses PyMuPDF and PIL to compress images while maintaining text quality
-5. **Output**: Saves compressed file with detailed compression statistics
+## 🔒 Privacy & Security
 
-## Requirements
+- **Local Processing**: PDF compression and splitting happen locally
+- **AI Analysis**: Only PDF content is sent to Google Gemini (secure HTTPS)
+- **No Data Storage**: No files are permanently stored by Google
+- **API Key Security**: Store your API key securely in `.env` file
 
-- Python 3.7+
-- PyPDF2
-- Pillow (PIL)
-- PyMuPDF
-- pathlib2
+## 📜 License
 
-## Error Handling
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-The script handles various error scenarios:
-- File not found
-- Invalid file format (non-PDF)
-- File size exceeds limits
-- Compression failures
-- Permission issues
+## 🤝 Contributing
 
-## Output Files
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-- **Compressed PDF**: Main output file with reduced size
-- **Naming Convention**: `{original_name}_compressed.pdf` (unless specified otherwise)
+## 📞 Support
 
-## Next Steps
+If you encounter any issues or have questions:
+1. Check the troubleshooting section above
+2. Review the terminal output for error messages
+3. Ensure your API key is valid and has sufficient quota
+4. Verify your internet connection for AI analysis
 
-This is Step 1 of the AI PDF Splitter system. Future steps will include:
-- AI-powered PDF analysis
-- Section extraction
-- JSON metadata generation
-- Further processing capabilities
+## 🔮 Future Features
 
-## License
+- [ ] Batch processing for multiple PDFs
+- [ ] Custom AI prompts for specialized document types
+- [ ] OCR integration for scanned documents
+- [ ] Cloud storage integration
+- [ ] Advanced filtering and search capabilities
 
-See LICENSE file for details.
+---
+
+**Made with ❤️ for intelligent document processing**
