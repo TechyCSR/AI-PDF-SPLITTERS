@@ -218,12 +218,16 @@ class UltraModernAIApp:
         self.main_container.columnconfigure(0, weight=1)
         self.main_container.rowconfigure(0, weight=0)  # Top area (file selector)
         self.main_container.rowconfigure(1, weight=1)  # Bottom area (terminal + results)
+        self.main_container.rowconfigure(2, weight=0)  # Footer area
         
         # Create top file selector area
         self.create_file_selector_area()
         
         # Create bottom split area (terminal + results)
         self.create_split_terminal_area()
+        
+        # Create modern footer
+        self.create_modern_footer()
     
     def create_file_selector_area(self):
         """Create compact file selector area at top"""
@@ -459,6 +463,73 @@ class UltraModernAIApp:
                                   command=self.clear_all)
         self.clear_btn.pack(side='right')
     
+    def create_modern_footer(self):
+        """Create modern footer with branding"""
+        # Footer container
+        footer_frame = tk.Frame(self.main_container,
+                               bg=self.colors['bg_secondary'],
+                               relief='solid',
+                               bd=1,
+                               height=35)
+        footer_frame.grid(row=2, column=0, sticky='ew', pady=(4, 0))
+        footer_frame.pack_propagate(False)
+        footer_frame.columnconfigure(0, weight=1)
+        footer_frame.columnconfigure(1, weight=0)  # Fixed width for center content
+        footer_frame.columnconfigure(2, weight=1)
+        
+        # Left side - Version info
+        version_label = tk.Label(footer_frame,
+                                text="🚀 AI PDF Splitter Pro v2.0",
+                                font=('Consolas', 9),
+                                bg=self.colors['bg_secondary'],
+                                fg=self.colors['text_secondary'])
+        version_label.grid(row=0, column=0, sticky='w', padx=(10, 0), pady=8)
+        
+        # Center - Build by credit with clickable link effect (properly centered)
+        credit_frame = tk.Frame(footer_frame, bg=self.colors['bg_secondary'])
+        credit_frame.grid(row=0, column=1, pady=8, sticky='')  # Empty sticky centers it
+        
+        credit_text = tk.Label(credit_frame,
+                              text="Built by ",
+                              font=('Consolas', 9),
+                              bg=self.colors['bg_secondary'],
+                              fg=self.colors['text_secondary'])
+        credit_text.pack(side='left')
+        
+        # Clickable TechyCSR link
+        self.link_label = tk.Label(credit_frame,
+                                  text="@TechyCSR",
+                                  font=('Consolas', 9, 'bold'),
+                                  bg=self.colors['bg_secondary'],
+                                  fg=self.colors['accent_cyan'],
+                                  cursor='hand2')
+        self.link_label.pack(side='left')
+        
+        # Bind click event to open website
+        self.link_label.bind("<Button-1>", lambda e: self.open_website("https://techycsr.me/"))
+        self.link_label.bind("<Enter>", lambda e: self.link_label.config(fg=self.colors['accent_green']))
+        self.link_label.bind("<Leave>", lambda e: self.link_label.config(fg=self.colors['accent_cyan']))
+        
+        # Right side - Status indicator
+        status_frame = tk.Frame(footer_frame, bg=self.colors['bg_secondary'])
+        status_frame.grid(row=0, column=2, sticky='e', padx=(0, 10), pady=8)
+        
+        self.footer_status = tk.Label(status_frame,
+                                     text="● Ready",
+                                     font=('Consolas', 9),
+                                     bg=self.colors['bg_secondary'],
+                                     fg=self.colors['accent_green'])
+        self.footer_status.pack()
+    
+    def open_website(self, url):
+        """Open website in default browser"""
+        import webbrowser
+        try:
+            webbrowser.open(url)
+            self.terminal_print(f"🌐 Opening: {url}")
+        except Exception as e:
+            self.terminal_print(f"❌ Could not open website: {str(e)}")
+    
     def terminal_print(self, message):
         """Print message to terminal with timestamp"""
         import datetime
@@ -476,6 +547,16 @@ class UltraModernAIApp:
         self.progress_var.set(percentage)
         self.progress_label.config(text=f"{percentage}%")
         self.status_label.config(text=status_text)
+        
+        # Update footer status with processing indicator
+        if hasattr(self, 'footer_status'):
+            if percentage == 0:
+                self.footer_status.config(text="● Ready", fg=self.colors['accent_green'])
+            elif percentage == 100:
+                self.footer_status.config(text="● Complete", fg=self.colors['success'])
+            else:
+                self.footer_status.config(text="● Processing", fg=self.colors['progress'])
+        
         self.root.update_idletasks()
     
     def processing_complete(self, success):
@@ -796,40 +877,6 @@ class UltraModernAIApp:
         accent_line.pack(fill=tk.X)
         
         return card_frame
-    
-    def create_modern_footer(self):
-        """Create modern footer with status and controls"""
-        footer_frame = tk.Frame(self.main_container, 
-                               bg=self.colors['bg_secondary'], 
-                               height=60)
-        footer_frame.pack(fill=tk.X, side=tk.BOTTOM)
-        footer_frame.pack_propagate(False)
-        
-        # Footer content
-        footer_content = tk.Frame(footer_frame, bg=self.colors['bg_secondary'])
-        footer_content.pack(expand=True, fill=tk.BOTH, padx=30, pady=15)
-        
-        # Status text
-        self.status_label = tk.Label(footer_content,
-                                    textvariable=self.current_step,
-                                    font=('Inter', 10),
-                                    fg=self.colors['text_secondary'],
-                                    bg=self.colors['bg_secondary'])
-        self.status_label.pack(side=tk.LEFT)
-        
-        # Exit button
-        exit_btn = tk.Button(footer_content,
-                            text="❌ Exit",
-                            font=('Inter', 9, 'bold'),
-                            fg=self.colors['text_primary'],
-                            bg=self.colors['error'],
-                            activebackground=self.colors['error'],
-                            bd=0,
-                            pady=8,
-                            padx=15,
-                            cursor='hand2',
-                            command=self.root.quit)
-        exit_btn.pack(side=tk.RIGHT)
     
     def animate_ui_elements(self):
         """Add subtle animations to UI elements"""

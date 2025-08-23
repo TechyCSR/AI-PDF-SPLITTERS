@@ -249,4 +249,27 @@ If you encounter any issues or have questions:
 
 ---
 
-**Made with ❤️ for intelligent document processing**
+## 👨‍💻 Author
+
+**Built with ❤️ by [@TechyCSR](https://techycsr.me/)**
+
+🌐 **Portfolio**: [techycsr.me](https://techycsr.me/)  
+💼 **Professional**: AI/ML Developer & Software Engineer  
+🚀 **Passion**: Creating intelligent solutions for document processing  
+
+---
+
+### 🎯 About This Project
+
+This AI PDF Splitter Pro represents the intersection of **artificial intelligence** and **practical document management**. Built using cutting-edge AI technology from Google Gemini, it demonstrates how modern AI can solve real-world productivity challenges.
+
+**Key Technologies:**
+- 🤖 **Google Gemini AI** - Advanced document analysis
+- 🐍 **Python 3.8+** - Core development platform  
+- 🖥️ **Tkinter** - Modern GUI framework
+- 📄 **PyMuPDF** - PDF processing engine
+- 🎨 **Modern UI/UX** - Professional interface design
+
+---
+
+*© 2024 TechyCSR. All rights reserved. Made with ❤️ for intelligent document processing.*
