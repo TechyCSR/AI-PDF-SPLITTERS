@@ -479,22 +479,36 @@ class UltraModernAIApp:
         self.root.update_idletasks()
     
     def processing_complete(self, success):
-        """Handle processing completion"""
+        """Handle processing completion and reset UI to ready state"""
         self.processing = False
         
         if success:
             self.progress_var.set(100)
             self.progress_label.config(text="100%")
             self.status_label.config(text="✅ Complete")
-            self.process_btn.config(state=tk.NORMAL, text="⚡ PROCESS")
             self.open_output_btn.config(state=tk.NORMAL)
-            self.terminal_print("🎉 Processing completed successfully!")
+            self.terminal_print("=" * 40)
+            self.terminal_print("🎉 PROCESSING COMPLETED SUCCESSFULLY!")
+            self.terminal_print("📁 Ready for new file processing!")
+            self.terminal_print("=" * 40)
         else:
             self.status_label.config(text="❌ Failed")
-            self.process_btn.config(state=tk.NORMAL, text="⚡ PROCESS")
-            self.terminal_print("💥 Processing failed!")
+            self.terminal_print("=" * 40)
+            self.terminal_print("💥 PROCESSING FAILED!")
+            self.terminal_print("🔄 Ready to try again or select new file!")
+            self.terminal_print("=" * 40)
         
+        # Always re-enable browse button
         self.browse_btn.config(state=tk.NORMAL)
+        
+        # Reset process button text and enable only if file is selected
+        self.process_btn.config(text="⚡ PROCESS")
+        if self.selected_file.get():
+            self.process_btn.config(state=tk.NORMAL)
+            self.terminal_print("✅ Ready to process again!")
+        else:
+            self.process_btn.config(state=tk.DISABLED)
+            self.terminal_print("📁 Select a PDF file to continue")
     
     def clear_output(self):
         """Clear output displays"""
